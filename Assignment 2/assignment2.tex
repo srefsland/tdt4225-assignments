@@ -1,0 +1,173 @@
+\documentclass[12pt, titlepage]{report}
+\usepackage[paper=letterpaper,margin=2cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{newtxtext, newtxmath}
+\usepackage{enumitem}
+\usepackage{titling}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{biblatex}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage[noabbrev]{cleveref}
+\usepackage[⟨options⟩]{fancyhdr}
+\usepackage{listings}
+\usepackage{subfigure}
+
+\setlength{\droptitle}{-6em}
+
+% Enter the specific assignment number and topic of that assignment below, and replace "Your Name" with your actual name.
+\title{TDT4225 Assignment 2 MySQL}
+\author{Group 45 \\ Group member(s): Simen Refsland}
+\date{\today}
+
+\addbibresource{main.bib}
+
+\begin{document}
+\maketitle
+\pagestyle{fancy}
+\fancyhead[L]{\textbf{Simen Refsland}}
+\fancyhead[R]{\textbf{Student number: 522436}}
+\fancyhead[C]{\textbf{TDT4225}}
+\newpage
+NOTE! In addition to the libraries provided in requirements.txt, I've also used NumPy to speed up some vectorized calculations in task 8 part 2. According to a TA in Piazza, Pandas should be fine, so I assume it's fine to use NumPy.
+\section*{Introduction}
+In this assignment, I was tasked with cleaning raw data and then inserting structured data from the Geolife dataset. This involved combining and extracting info present in the raw .plt files in such a way that it was compatible with the User, Activity and TrackPoint tables specified. In the next part, several different queries were written to answer questions about the data, sometimes involving a combination of SQL queries and manual processing in Python.
+
+I have not used the virtual machines to run MySQL, the testing database is local. Since I was the only one in the group, I have worked locally, as opposed to using Git.
+\section*{Results}
+\subsection*{Part 1}
+NOTE! When I discard files that are longer than 2506 lines (including header lines), it should be noted that the lines are counted where there is actual text, meaning I don't count the last line which is empty. This \emph{may} slightly affect the number of activities that are inserted. I also assume that we discard activities that have more than 2500 lines, as there would be no need to check if the .plt file exceeds 2500 lines (you could just take the first 2506 lines otherwise). Some transportation modes are also discarded if they don't fit the start and end date of an activity.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.2\textwidth]{img/top10_user.png}
+    \caption{First 10 users}
+    \label{fig:my_label}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/top10_activity.png}
+    \caption{First 10 activities}
+    \label{fig:my_label}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/top10_trackpoint.png}
+    \caption{First 10 trackpoints}
+    \label{fig:my_label}
+\end{figure}
+\subsection*{Part 2}
+\subsubsection*{Task 1}
+Counts the number of rows of each table user, activity and track\_point.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task1.png}
+    \caption{Task 1 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 2}
+First counts the trackpoints per user, and then uses that table to average, min and max the number of trackpoints.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task2.png}
+    \caption{Task 2 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 3}
+Simple counting of activites grouped by user\_id and ordered from highest to lowest.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task3.png}
+    \caption{Task 3 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 4}
+Fetches the distinct user\_id's that have logged taking the bus as transportation\_mode in at least one of the activities.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{img/task4.png}
+    \caption{Task 4 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 5}
+Very similar to task 3, but we count the distinct transportation modes instead. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task5.png}
+    \caption{Task 5 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 6}
+No results found, but returns one result if I add an activity with the same user id, transportation mode and start and end date.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task6.png}
+    \caption{Task 6 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 7}
+Assumption here is that the difference in dates (by days) between start\_date\_time and end\_date\_time is 1, meaning that if an activity for example starts 2007-08-09 23:59:35 and ends 2007-08-10 00:35:34, it counts as ending the next day. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task7a.png}
+    \caption{Task 7a result}
+    \label{fig:my_label}
+\end{figure}
+In 7b), I get 1011 results, which would be very cumbersome to insert as results here due to the way the results are printed, so I limit the results to the first 100 results.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/task7b.png}
+    \caption{Task 7b result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 8}
+To reduce the massive number of potential matches of trackpoints, activities of user x and y are first filtered out if they overlap in start\_date\_time and end\_date\_time, and if their bounding boxes overlap (as defined as min and max latitude and longitude). The result is pairs of activities that overlap, and if any of their respective trackpoints fit the criteria (within 50 m and 30 sec), the users have been close in time and space. Despite this filtering, the program ran for $\approx$ 2 hours, so there's probably something that I'm missing.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task8.png}
+    \caption{Task 8 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 9}
+Row numbering (window function ROW\_NUMBER() partitioned by activity id) is used to consecutively number the trackpoints in an activity after invalid entries are removed. Previous attempts used the id, but this skips linking the current valid altitude to the next. For example, if trackpoint with id 7 is removed, the gap must be bridged between id 6 and id 8. I've noticed that there are several dubious recorded altitudes (such as -1000 feet), but I've based my answer on the assumption that only -777 is an invalid altitude, since it is possible to be below sea level, where a filtering of altitude $<0$ would be logical if not. All results are in meters by converting feet to meter by a constant.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task9.png}
+    \caption{Task 9 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 10}
+I assume that "in one day", that refers to within a single date, not within 24 hours of an activity has started. Users are filtered out if they have has\_label set to 1, and trackpoints are selected if the activity transportation mode is not null. Distances are calculated if the current trackpoint and previous have the same date, transportation mode and activity id. Activity id is important if there are for example two taxi rides in a day for a user, with different starting locations, so that the distance between them are not added. The distances accumulate based on user, date and transportation mode.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task10.png}
+    \caption{Task 10 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 11}
+I've assumed that an activity is invalid if ANY consecutive trackpoints deviate at least 5 min, not all of them.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/task11_all.png}
+    \caption{Task 11 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 12}
+To get one transportation mode, I've used row numbers for ranking the transportation modes, so if there's a tie, one of them will be assigned row number 2 instead of 1. I guess I could have concatenated them together alternatively.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task12.png}
+    \caption{Task 12 result}
+    \label{fig:my_label}
+\end{figure}
+\section*{Discussion}
+I believe I did most tasks as explained, I did not use SQL variables however. In many of the simpler SQL tasks, a pure SQL query was sufficient, but tasks necessitated the use of manual calculations in Python (especially haversine distance measures). 
+
+Task 8 was by far the most difficult, and I could only get a result within a reasonable runtime when doing a coarse filtering with overlapping bounding boxes and durations before doing trackpoint comparisons. Task 9 and 10 were also quite difficult. Task 9 could probably been more easily done if I calculated the altitude gains in Python instead of forming a SQL query that did everything.
+
+I feel like I've learned a lot from this assignment, as I beforehand have dealt with by and large pretty simple SQL queries, and to solve the tasks, I had to brush up on a lot of basic SQL as well as attaining more intermediate knowledge. I've also gained some experience in how to insert large amounts of data into SQL in turn depending on foreign key constraints (User$\rightarrow$Activity$\rightarrow$TrackPoint), as well as some organizing and cleaning of data. 
+
+\section*{Feedback}
+The assignment was fun and educational, but some of the questions may be a bit ambiguous, e.g., what is defined as an activity logged twice, same user and start and end date, or the same trackpoints? Most questions were clarified on Piazza, but if a variant of this assignment would be assigned again, I would consider being as explicit as possible.
+\end{document}
