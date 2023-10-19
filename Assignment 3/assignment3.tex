@@ -1,0 +1,172 @@
+\documentclass[12pt, titlepage]{report}
+\usepackage[paper=letterpaper,margin=2cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{newtxtext, newtxmath}
+\usepackage{enumitem}
+\usepackage{titling}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{biblatex}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage[noabbrev]{cleveref}
+\usepackage[⟨options⟩]{fancyhdr}
+\usepackage{listings}
+\usepackage{subfigure}
+
+\setlength{\droptitle}{-6em}
+
+% Enter the specific assignment number and topic of that assignment below, and replace "Your Name" with your actual name.
+\title{TDT4225 Assignment 3 MongoDB}
+\author{Group 45 \\ Group member(s): Simen Refsland}
+\date{\today}
+
+\addbibresource{main.bib}
+
+\begin{document}
+\maketitle
+\pagestyle{fancy}
+\fancyhead[L]{\textbf{Simen Refsland}}
+\fancyhead[R]{\textbf{Student number: 522436}}
+\fancyhead[C]{\textbf{TDT4225}}
+\newpage
+\section*{Introduction}
+NB! Largely the same as assignment 2...
+
+In this assignment, I was tasked with cleaning raw data and then inserting structured data from the Geolife dataset. This involved combining and extracting info present in the raw .plt files in such a way that it was compatible with the User, Activity and TrackPoint tables specified. In the next part, several different queries were written to answer questions about the data, sometimes involving a combination of MongoDB queries and manual processing in Python.
+
+I have not used the virtual machines to run MongoDB, the testing database is local. Since I was the only one in the group, I have worked locally, as opposed to using Git.
+\section*{Results}
+\subsection*{Part 1}
+
+NOTE! When I discard files that are longer than 2506 lines (including header lines), it should be noted that the lines are counted where there is actual text, meaning I don't count the last line which is empty. This \emph{may} slightly affect the number of activities that are inserted. I also assume that we discard activities that have more than 2500 lines, as there would be no need to check if the .plt file exceeds 2500 lines (you could just take the first 2506 lines otherwise). Some transportation modes are also discarded if they don't fit the start and end date of an activity, most often relating to the fact that some users choose to label different parts of a single activity.
+
+The preprocessing and insertion is largely the same as assignment 2, but the datatypes are explicitly defined when they are not a string, as there is no schema specification prior to insertion. The way the data was represented prior to insertion in SQL, was largely the same representation needed to insert it into MongoDB. The modeling decisions are explained in the discussion part.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/user_collection.png}
+    \caption{First 10 users}
+    \label{fig:my_label}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/activity_collection.png}
+    \caption{First 10 activities}
+    \label{fig:my_label}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/trackpoint_collection.png}
+    \caption{First 10 trackpoints}
+    \label{fig:my_label}
+\end{figure}
+\subsection*{Part 2}
+\subsubsection*{Task 1}
+Counts the number of documents in user, activity and track\_point collections.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task1.png}
+    \caption{Task 1 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 2}
+Grouping on user\_id and then taking the average.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task2.png}
+    \caption{Task 2 result}
+    \label{fig:my_label}
+\end{figure}
+\subsubsection*{Task 3}
+Grouping on user\_id and sorting by highest activity count and limiting by 20.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task3.png}
+    \caption{Task 3 result}
+    \label{fig:my_label}
+\end{figure}
+
+\subsubsection*{Task 4}
+Selecting the distinct user\_ids who have transportation\_mode at least once.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task4.png}
+    \caption{Task 4 result}
+    \label{fig:my_label}
+\end{figure}
+
+\subsubsection*{Task 5}
+Simple grouping on transportation mode and counting number of activities.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task5.png}
+    \caption{Task 5 result}
+    \label{fig:my_label}
+\end{figure}
+
+\subsubsection*{Task 6}
+2008 is the year with most activities and 2009 is the year with most hours recorded. The first subtask handles edge cases where the activity might end in the next year, this is not done in subtask b because 2009 will be the year with most recorded hours by a wide margin, but an alternative implementation is done in Python, but only differs by about 3 hours, so not significantly.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task6.png}
+    \caption{Task 6a and 6b result}
+    \label{fig:my_label}
+\end{figure}
+
+\subsubsection*{Task 7}
+This is calculated by filtering out the start\_date\_time year, and user id and correct transportation mode. To ensure that we don't measure distances in the next year if there is some overlap, I check that the year of the current trackpoint is 2008.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task7.png}
+    \caption{Task 7 result}
+    \label{fig:my_label}
+\end{figure}
+
+\subsubsection*{Task 8}
+Filters out trackpoints whose altitude is -777 and adds gained altitude if the current altitude is higher than the last trackpoint.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task8.png}
+    \caption{Task 8 result}
+    \label{fig:my_label}
+\end{figure}
+
+\subsubsection*{Task 9}
+Fetches all the activities and counts invalid activities if consecutive timestamps are more than 5 minutes apart. There is no filtering on altitude being -777 here.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{img/task9.png}
+    \caption{Task 9 result}
+    \label{fig:my_label}
+\end{figure}
+
+\subsubsection*{Task 10}
+As stated on Piazza, I have defined a radius (1 km, could be a bit off actual city limits) around the given coordinate where any user within this radius is said to be within the forbidden city limits.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task10.png}
+    \caption{Task 8 result}
+    \label{fig:my_label}
+\end{figure}
+
+\subsubsection*{Task 11}
+To account for users that have ties for most used transportation mode, I have just taken the first transportation mode for each user after sorting by user\_id and activity count. I noticed that the answers slightly deviate from assignment 2, but this is likely because of the "selection policy" when there is a tie, which is a result of how entries are ordered differently.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/task11.png}
+    \caption{Task 11 result}
+    \label{fig:my_label}
+\end{figure}
+\section*{Discussion}
+I have modeled the data much in the same way as before, where user, activity and trackpoint is its own collection. Looking at the cardinality of the data might suggest that a one-to-many approach is appropriate (as max numbers of activities is $\approx 2000$ and only activites with 2500 trackpoints or less are added), where an array of references to the trackpoints may be appropriate. However, if we were to imagine a live production setting, we can easily see that the number of trackpoints and activities would be unbounded, meaning that a one-to-zillions relationship is possible. Looking back, as the user collection only contains the \emph{has\_labels} field, and is rarely (if ever) accessed, it would probably be more logical to denormalize this collection into the activity collection. In addition, the data is not expected to change, as the entries can be viewed as "archived" or static, leading to few possibilities for updates. Denormalizing the \emph{user\_id} field into trackpoints may also be reasonable, as many of the queries are based on the user, where the only interesting field from activities is the user id.
+
+With this assignment, I decided to utilize manual processing in Python to a greater extent than in the previous assignment. This was to solve tasks which deals with current and previous trackpoints, as it's more intuitive to come up with a solution that works faster than by pure querying, which I learned during the last assignment. This seems to be fairly easy to solve using \emph{\$setWindowFields} and the \emph{\$shift} operator however, but I only saw this after the fact, and decided to not implement due to time concerns. The answers should be correct nevertheless.
+ 
+Prior to this, I had very limited experience with MongoDB, especially dealing with more complicated queries than merely finding some data based on some condition. I've therefore learned a lot during this assignment, although I've might not seen the true potential of this type of database due to the strongly relational structure of this data, which in my opinion is better suited for relational databases.
+
+Something that took a while to realize, was that an index was needed on \emph{activity\_id} to efficiently use \emph{\$lookup} to embed trackpoints into activities, otherwise the time used on lookups were way too long.
+
+\section*{Feedback}
+The assignment was fun and educational, I've found it to have less ambiguity than the last assignment, which was good.
+\end{document}
